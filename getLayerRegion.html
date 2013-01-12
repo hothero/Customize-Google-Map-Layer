@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="hothero">
+    <meta name="keywords" content="google,map,javascript,layer,customization">
+    <meta charset="utf-8">
+    <title>Get Layer Region</title>
+    <link href="default.css" rel="stylesheet">
+    <script src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+    <script>
+
+    var sw = null, ne = null, rect = null;
+
+    function initialize() {
+      var myLatLng = new google.maps.LatLng(24.9860191, 121.57646120000004);
+      var mapOptions = {
+        zoom: 17,
+        center: myLatLng,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      };
+
+      var map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
+
+      google.maps.event.addListener(map, 'click', function(e) {        
+        type = getRadioCheckedValue("group1");
+
+        if (type == "1")  // sw
+        {
+          sw.setPosition(e.latLng);
+        } else if (type == "2") {
+          ne.setPosition(e.latLng);
+        }
+
+        updateRect();
+      });
+
+      rect = new google.maps.Rectangle({
+        map: map
+      });
+
+      sw = new google.maps.Marker({
+        /* https://developers.google.com/maps/documentation/javascript/reference#Symbol */
+        map: map,
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          fillOpacity: 1,
+          fillColor: 'red',
+          strokeWeight: 0,
+          scale: 3
+        },
+        draggable: true
+      });
+
+      google.maps.event.addListener(sw, 'drag', function(e) {
+        sw.setPosition(e.latLng); // by closure
+        updateRect();
+      });
+      
+      ne = new google.maps.Marker({
+        map: map,
+        icon: {
+          path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+          fillOpacity: 1,
+          fillColor: 'red',
+          strokeWeight: 0,
+          scale: 3
+        },
+        draggable: true
+      });
+
+      google.maps.event.addListener(ne, 'drag', function(e) {
+        ne.setPosition(e.latLng); // by closure
+        updateRect();
+      });
+
+
+      /* === for searching address feature by closure === */
+      var geocoder = new google.maps.Geocoder();
+      var address_field = document.getElementById("address_txt");
+      google.maps.event.addDomListener(document.getElementById("search_btn"), 'click', function(){
+        var address = address_field.value;
+
+        if (geocoder) {
+          geocoder.geocode({'address':address, 'language':'tw'}, function(results, status){
+          if (status == google.maps.GeocoderStatus.OK) {
+            map.panTo(results[0].geometry.location);
+            document.getElementById("address_result").innerHTML = "Location: " + results[0].geometry.location.toString();
+          } else {
+            alert("Geocode was not successful for the following reason: " + status);
+          }
+          });
+        }
+      });
+    }
+
+    function getRadioCheckedValue(radio_name)
+    {
+       var oRadio = document.forms[0].elements[radio_name];
+     
+       for(var i = 0; i < oRadio.length; i++)
+       {
+          if(oRadio[i].checked)
+          {
+             return oRadio[i].value;
+          }
+       }
+     
+       return '';
+    }
+
+    function updateRect() {
+      if (sw.getPosition() != null && ne.getPosition() != null) {
+        rect.setBounds(new google.maps.LatLngBounds(sw.getPosition(), ne.getPosition()));
+        document.getElementById("address_result").innerHTML = "Location: " + sw.getPosition().toString() + "_" + ne.getPosition().toString();
+      }
+    }
+    </script>
+  </head>
+  <body onload="initialize()"> 
+    <div id="wrap" align="center">
+      <div id="control_div">
+          <label>Address: </label><input type="text" size="50" id="address_txt"></input> <button id="search_btn">Search</button>
+          <div>
+            <form>
+              <input type="radio" name="group1" value="1" checked> south west<br>
+              <input type="radio" name="group1" value="2"> north east<br>
+            </form>
+          </div>
+      </div>
+      <div id="map_container">
+        <div id="map_canvas"></div>
+      </div>
+      <label id="address_result"></label>
+    </div>
+  </body>
+</html>

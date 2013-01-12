@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="hothero">
+    <meta name="keywords" content="google,map,javascript,layer,customization">
+    <meta charset="utf-8">
+    <title>Google Maps: Showing Customized Layer</title>
+    <link href="default.css" rel="stylesheet">
+    <script src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+    <script>
+
+      var overlay;
+
+      USGSOverlay.prototype = new google.maps.OverlayView();
+
+      var allBounds = [
+          
+          new google.maps.LatLngBounds(new google.maps.LatLng(24.98688583608172, 121.57391041517258), new google.maps.LatLng(24.98753860250197, 121.57471507787704)),
+          new google.maps.LatLngBounds(new google.maps.LatLng(24.987023196901276, 121.57320097088814), new google.maps.LatLng(24.987658944536243, 121.57398015260696)),
+          new google.maps.LatLngBounds(new google.maps.LatLng(24.985661737752878, 121.57306015491486), new google.maps.LatLng(24.986957555466827, 121.5742751955986)),
+          new google.maps.LatLngBounds(new google.maps.LatLng(24.98440723704915, 121.5732479095459), new google.maps.LatLng(24.985440499217276, 121.57429128885269)),
+          new google.maps.LatLngBounds(new google.maps.LatLng(24.98654790350076, 121.57547548413277), new google.maps.LatLng(24.987205534035297, 121.57639682292938)),
+          new google.maps.LatLngBounds(new google.maps.LatLng(24.98542104965666, 121.57591938972473), new google.maps.LatLng(24.98632788214842, 121.57693326473236)),
+          new google.maps.LatLngBounds(new google.maps.LatLng(24.986447009780303, 121.57623320817947), new google.maps.LatLng(24.987126521310426, 121.57704994082451))
+
+          ];
+
+      function initialize() {
+        var myLatLng = new google.maps.LatLng(24.9860191, 121.57646120000004);
+        var mapOptions = {
+          zoom: 17,
+          center: myLatLng,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+
+        var map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
+
+        for (var i=1; i<=allBounds.length; i++)
+          overlay = new USGSOverlay(allBounds[i-1], "images/"+i+".png", map);
+      }
+
+      function USGSOverlay(bounds, image, map) {
+
+        // Now initialize all properties.
+        this.bounds_ = bounds;
+        this.image_ = image;
+        this.map_ = map;
+
+        // We define a property to hold the image's div. We'll
+        // actually create this div upon receipt of the onAdd()
+        // method so we'll leave it null for now.
+        this.div_ = null;
+
+        // Explicitly call setMap on this overlay
+        this.setMap(map);
+      }
+
+      USGSOverlay.prototype.onAdd = function() {
+
+        // Note: an overlay's receipt of onAdd() indicates that
+        // the map's panes are now available for attaching
+        // the overlay to the map via the DOM.
+
+        // Create the DIV and set some basic attributes.
+        var div = document.createElement('div');
+        div.style.border = 'none';
+        div.style.borderWidth = '0px';
+        div.style.position = 'absolute';
+
+        // Create an IMG element and attach it to the DIV.
+        var img = document.createElement('img');
+        img.src = this.image_;
+        img.style.width = '100%';
+        img.style.height = '100%';
+        //img.style.position = 'absolute';
+        div.appendChild(img);
+
+        // Set the overlay's div_ property to this DIV
+        this.div_ = div;
+
+        // We add an overlay to a map via one of the map's panes.
+        // We'll add this overlay to the overlayLayer pane.
+        var panes = this.getPanes();
+        panes.overlayLayer.appendChild(div);
+      }
+
+      USGSOverlay.prototype.draw = function() {
+
+        // Size and position the overlay. We use a southwest and northeast
+        // position of the overlay to peg it to the correct position and size.
+        // We need to retrieve the projection from this overlay to do this.
+        var overlayProjection = this.getProjection();
+
+        // Retrieve the southwest and northeast coordinates of this overlay
+        // in latlngs and convert them to pixels coordinates.
+        // We'll use these coordinates to resize the DIV.
+        var sw = overlayProjection.fromLatLngToDivPixel(this.bounds_.getSouthWest());
+        var ne = overlayProjection.fromLatLngToDivPixel(this.bounds_.getNorthEast());
+
+        // Resize the image's DIV to fit the indicated dimensions.
+        var div = this.div_;
+        div.style.left = sw.x + 'px';
+        div.style.top = ne.y + 'px';
+        div.style.width = (ne.x - sw.x) + 'px';
+        div.style.height = (sw.y - ne.y) + 'px';
+      }
+
+      USGSOverlay.prototype.onRemove = function() {
+        this.div_.parentNode.removeChild(this.div_);
+        this.div_ = null;
+      }
+    </script>
+  </head>
+  <body onload="initialize()">
+    <div id="wrap" align="center">
+      <div id="map_container">
+        <div id="map_canvas"></div>
+      </div>
+      <label id="address_result"></label>
+    </div>
+  </body>
+</html>
