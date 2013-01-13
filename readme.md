@@ -15,3 +15,6 @@ Just few steps to customize your google map layer
 [getLayerRegion.html](http://hothero.org/CGMapLayer/getLayerRegion.html)
 
 [show.html](http://hothero.org/CGMapLayer/show.html)
+
+***
+Images designed by ooisntoo.
